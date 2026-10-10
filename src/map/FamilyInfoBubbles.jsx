@@ -79,7 +79,7 @@ const FamilyInfoBubbles = ({ positions, onMarkerClick }) => {
       const marker = new Marker({
         element: bubble,
         anchor: 'bottom',
-        offset: [0, -45],
+        offset: [0, -12],
       })
         .setLngLat(toMapCoordinates(position.longitude, position.latitude))
         .addTo(map);
