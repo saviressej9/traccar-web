@@ -18,3 +18,4 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run build
+      # Build verification for family-ui
