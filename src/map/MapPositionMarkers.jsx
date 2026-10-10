@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { map, useMapReady } from './core/MapView';
 import MapMarkers from './MapMarkers';
+import FamilyInfoBubbles from './FamilyInfoBubbles';
 import { formatTime, getStatusColor } from '../common/util/formatter';
 import { mapIconKey } from './core/preloadImages';
 import { useAttributePreference } from '../common/util/preferences';
@@ -130,7 +131,7 @@ const MapPositionMarkers = ({
     <>
       <MapMarkers
         markers={markers.filter((marker) => marker.deviceId !== selectedDeviceId)}
-        showTitles
+        showTitles={false}
         direction
         cluster={mapCluster}
         onClick={onClick}
@@ -138,11 +139,17 @@ const MapPositionMarkers = ({
       />
       <MapMarkers
         markers={markers.filter((marker) => marker.deviceId === selectedDeviceId)}
-        showTitles
+        showTitles={false}
         direction
         onClick={onClick}
         disabled={disabled}
       />
+      {mapReady && (
+        <FamilyInfoBubbles
+          positions={positions}
+          onMarkerClick={disabled ? undefined : onMarkerClick}
+        />
+      )}
     </>
   );
 };
