@@ -74,10 +74,7 @@ export const createAvatarMarker = async (imageUrl) => {
 };
 
 export const getAvatarMarkerKey = (device) => {
-  if (
-    device?.category !== 'person' ||
-    !device.attributes?.deviceImage
-  ) {
+  if (device?.category !== 'person' || !device.attributes?.deviceImage) {
     return null;
   }
 
@@ -116,12 +113,7 @@ export const registerAvatarMarker = async (map, device) => {
 
     return imageKey;
   } catch (error) {
-    console.warn(
-      'Unable to load family avatar',
-      device.id,
-      error,
-    );
-
+    console.warn('Unable to load family avatar', device.id, error);
     return null;
   } finally {
     pendingAvatars.delete(imageUrl);
@@ -134,9 +126,7 @@ export const restoreAvatarMarkers = async (map, devices) => {
   const activeUrls = new Set();
 
   const eligibleDevices = Object.values(devices).filter(
-    (device) =>
-      device.category === 'person' &&
-      device.attributes?.deviceImage,
+    (device) => device.category === 'person' && device.attributes?.deviceImage,
   );
 
   eligibleDevices.forEach((device) => {
@@ -144,11 +134,7 @@ export const restoreAvatarMarkers = async (map, devices) => {
     activeUrls.add(getAvatarUrl(device));
   });
 
-  await Promise.all(
-    eligibleDevices.map((device) =>
-      registerAvatarMarker(map, device),
-    ),
-  );
+  await Promise.all(eligibleDevices.map((device) => registerAvatarMarker(map, device)));
 
   // Remove outdated marker registrations.
   registeredAvatars.forEach((key, deviceId) => {
