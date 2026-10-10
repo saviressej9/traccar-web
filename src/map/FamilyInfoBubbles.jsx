@@ -13,10 +13,7 @@ const FamilyInfoBubbles = ({ positions, onMarkerClick }) => {
     positions.forEach((position) => {
       const device = devices[position.deviceId];
 
-      if (
-        device?.category !== 'person'
-        || !device.attributes?.deviceImage
-      ) {
+      if (device?.category !== 'person' || !device.attributes?.deviceImage) {
         return;
       }
 
@@ -50,9 +47,7 @@ const FamilyInfoBubbles = ({ positions, onMarkerClick }) => {
       `;
 
       const status = document.createElement('div');
-      status.textContent = device.status === 'online'
-        ? 'Location available'
-        : 'Last known location';
+      status.textContent = device.status === 'online' ? 'Location available' : 'Last known location';
       status.style.cssText = `
         font-size: 11px;
         color: #c7c9ce;
@@ -73,26 +68,29 @@ const FamilyInfoBubbles = ({ positions, onMarkerClick }) => {
       bubble.appendChild(card);
       bubble.appendChild(pointer);
 
-      bubble.addEventListener('click', (event) => {
+      const handleClick = (event) => {
         event.stopPropagation();
         onMarkerClick?.(position.id, position.deviceId);
-      });
+      };
+
+      bubble.addEventListener('click', handleClick);
 
       const marker = new Marker({
         element: bubble,
         anchor: 'bottom',
         offset: [0, -45],
       })
-        .setLngLat(
-          toMapCoordinates(position.longitude, position.latitude),
-        )
+        .setLngLat(toMapCoordinates(position.longitude, position.latitude))
         .addTo(map);
 
-      markers.push(marker);
+      markers.push({ marker, bubble, handleClick });
     });
 
     return () => {
-      markers.forEach((marker) => marker.remove());
+      markers.forEach(({ marker, bubble, handleClick }) => {
+        bubble.removeEventListener('click', handleClick);
+        marker.remove();
+      });
     };
   }, [positions, devices, onMarkerClick]);
 
