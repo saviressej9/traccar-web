@@ -2,20 +2,38 @@ name: Build Project
 
 on:
   push:
-    branches: [ master, family-ui ]
+    branches:
+      - master
+      - family-ui
   pull_request:
-    branches: [ master ]
+    branches:
+      - master
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
         with:
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci
-      - run: npm run build
-      # Build verification for family-ui
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Upload compiled frontend
+        uses: actions/upload-artifact@v4
+        with:
+          name: traccar-family-ui
+          path: build/
+          if-no-files-found: error
+          retention-days: 7
