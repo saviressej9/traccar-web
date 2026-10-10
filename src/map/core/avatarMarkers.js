@@ -1,6 +1,13 @@
 
 const avatarCache = new Map();
 const pendingAvatars = new Map();
+const registeredAvatars = new Map();
+
+const getAvatarUrl = (device) =>
+  `/api/media/${encodeURIComponent(device.uniqueId)}/${encodeURIComponent(device.attributes.deviceImage)}`;
+
+const getAvatarKey = (device) =>
+  `family-avatar-${device.id}-${encodeURIComponent(device.attributes.deviceImage)}`;
 
 export const createAvatarMarker = async (imageUrl) => {
   const image = new Image();
@@ -18,19 +25,22 @@ export const createAvatarMarker = async (imageUrl) => {
 
   const ctx = canvas.getContext('2d');
 
-  // Draw circular background with a subtle shadow.
+  if (!ctx) {
+    throw new Error('Unable to create avatar canvas');
+  }
+
+  // Circular white background and subtle shadow.
   ctx.save();
   ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
   ctx.shadowBlur = 8;
   ctx.shadowOffsetY = 3;
   ctx.fillStyle = '#ffffff';
-
   ctx.beginPath();
   ctx.arc(center, center, radius + 3, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  // Crop the uploaded image into a circle.
+  // Circular image crop.
   ctx.save();
   ctx.beginPath();
   ctx.arc(center, center, radius, 0, Math.PI * 2);
@@ -54,7 +64,7 @@ export const createAvatarMarker = async (imageUrl) => {
 
   ctx.restore();
 
-  // Add the white Find My-style border.
+  // Find My-style white outline.
   ctx.beginPath();
   ctx.arc(center, center, radius, 0, Math.PI * 2);
   ctx.strokeStyle = '#ffffff';
@@ -64,48 +74,49 @@ export const createAvatarMarker = async (imageUrl) => {
   return ctx.getImageData(0, 0, size, size);
 };
 
-export const registerAvatarMarker = async (map, device) => {
-  // Only Person devices with uploaded images use avatars.
+export const getAvatarMarkerKey = (device) => {
   if (
-    device.category !== 'person' ||
+    device?.category !== 'person' ||
     !device.attributes?.deviceImage
   ) {
     return null;
   }
 
-  const imageKey = `family-avatar-${device.id}`;
+  return getAvatarKey(device);
+};
 
-  const imageUrl =
-    `/api/media/${encodeURIComponent(device.uniqueId)}/` +
-    encodeURIComponent(device.attributes.deviceImage);
+export const registerAvatarMarker = async (map, device) => {
+  const imageKey = getAvatarMarkerKey(device);
+
+  if (!imageKey) {
+    return null;
+  }
+
+  const imageUrl = getAvatarUrl(device);
 
   try {
     let avatar = avatarCache.get(imageUrl);
 
     if (!avatar) {
       if (!pendingAvatars.has(imageUrl)) {
-        pendingAvatars.set(
-          imageUrl,
-          createAvatarMarker(imageUrl),
-        );
+        const promise = createAvatarMarker(imageUrl);
+        pendingAvatars.set(imageUrl, promise);
       }
 
       avatar = await pendingAvatars.get(imageUrl);
       avatarCache.set(imageUrl, avatar);
-      pendingAvatars.delete(imageUrl);
     }
 
-    // Register the image with MapLibre if necessary.
     if (!map.hasImage(imageKey)) {
       map.addImage(imageKey, avatar, {
         pixelRatio: 2,
       });
     }
 
+    registeredAvatars.set(device.id, imageKey);
+
     return imageKey;
   } catch (error) {
-    pendingAvatars.delete(imageUrl);
-
     console.warn(
       'Unable to load family avatar',
       device.id,
@@ -113,17 +124,47 @@ export const registerAvatarMarker = async (map, device) => {
     );
 
     return null;
+  } finally {
+    pendingAvatars.delete(imageUrl);
   }
 };
 
-// Restore avatar images after the map style changes.
-export const restoreAvatarMarkers = (map, devices) =>
-  Promise.all(
-    Object.values(devices)
-      .filter(
-        (device) =>
-          device.category === 'person' &&
-          device.attributes?.deviceImage,
-      )
-      .map((device) => registerAvatarMarker(map, device)),
+// Register all current avatars and restore them after style changes.
+export const restoreAvatarMarkers = async (map, devices) => {
+  const activeKeys = new Set();
+  const activeUrls = new Set();
+
+  const eligibleDevices = Object.values(devices).filter(
+    (device) =>
+      device.category === 'person' &&
+      device.attributes?.deviceImage,
   );
+
+  eligibleDevices.forEach((device) => {
+    activeKeys.add(getAvatarKey(device));
+    activeUrls.add(getAvatarUrl(device));
+  });
+
+  await Promise.all(
+    eligibleDevices.map((device) =>
+      registerAvatarMarker(map, device),
+    ),
+  );
+
+  // Remove outdated marker registrations.
+  registeredAvatars.forEach((key, deviceId) => {
+    if (!activeKeys.has(key)) {
+      if (map.hasImage(key)) {
+        map.removeImage(key);
+      }
+      registeredAvatars.delete(deviceId);
+    }
+  });
+
+  // Remove cached images no longer referenced by any device.
+  avatarCache.forEach((value, url) => {
+    if (!activeUrls.has(url)) {
+      avatarCache.delete(url);
+    }
+  });
+};
