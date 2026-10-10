@@ -37,6 +37,22 @@ const MapMarkers = ({ markers, showTitles, cluster, direction, onClick, disabled
     map.easeTo({ center: feature.geometry.coordinates, zoom });
   }, []);
 
+  // Family avatars receive a dark rounded label background.
+  // All other markers retain the original Traccar styling.
+  const familyLabel = {
+    'text-color': '#ffffff',
+    'text-halo-color': '#202124',
+    'text-halo-width': 5,
+    'text-halo-blur': 2,
+  };
+
+  const standardLabel = {
+    'text-color': '#202124',
+    'text-halo-color': '#ffffff',
+    'text-halo-width': 1,
+    'text-halo-blur': 0,
+  };
+
   const layers = [
     {
       type: 'symbol',
@@ -60,7 +76,36 @@ const MapMarkers = ({ markers, showTitles, cluster, direction, onClick, disabled
             'icon-allow-overlap': true,
             'symbol-sort-key': ['get', 'id'],
           },
-      ...(showTitles ? { paint: { 'text-halo-color': 'white', 'text-halo-width': 1 } } : {}),
+      ...(showTitles
+        ? {
+            paint: {
+              'text-color': [
+                'case',
+                ['==', ['get', 'familyAvatar'], true],
+                familyLabel['text-color'],
+                standardLabel['text-color'],
+              ],
+              'text-halo-color': [
+                'case',
+                ['==', ['get', 'familyAvatar'], true],
+                familyLabel['text-halo-color'],
+                standardLabel['text-halo-color'],
+              ],
+              'text-halo-width': [
+                'case',
+                ['==', ['get', 'familyAvatar'], true],
+                familyLabel['text-halo-width'],
+                standardLabel['text-halo-width'],
+              ],
+              'text-halo-blur': [
+                'case',
+                ['==', ['get', 'familyAvatar'], true],
+                familyLabel['text-halo-blur'],
+                standardLabel['text-halo-blur'],
+              ],
+            },
+          }
+        : {}),
       ...(onClick
         ? { on: { mouseenter: onMouseEnter, mouseleave: onMouseLeave, click: onMarkerClick } }
         : {}),
@@ -119,6 +164,7 @@ const MapMarkers = ({ markers, showTitles, cluster, direction, onClick, disabled
             title: title || '',
             rotation: rotation || 0,
             direction: showDirection || false,
+            familyAvatar: Boolean(image?.startsWith('family-avatar-')),
           },
         }),
       ),
