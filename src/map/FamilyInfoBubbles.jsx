@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Marker } from 'maplibre-gl';
@@ -47,7 +48,8 @@ const FamilyInfoBubbles = ({ positions, onMarkerClick }) => {
       `;
 
       const status = document.createElement('div');
-      status.textContent = device.status === 'online' ? 'Location available' : 'Last known location';
+      status.textContent =
+        device.status === 'online' ? 'Location available' : 'Last known location';
       status.style.cssText = `
         font-size: 11px;
         color: #c7c9ce;
