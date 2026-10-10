@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { map, useMapReady } from './core/MapView';
@@ -7,11 +6,7 @@ import { formatTime, getStatusColor } from '../common/util/formatter';
 import { mapIconKey } from './core/preloadImages';
 import { useAttributePreference } from '../common/util/preferences';
 import { fromMapCoordinates } from './core/mapUtil';
-import {
-  getAvatarMarkerKey,
-  registerAvatarMarker,
-  restoreAvatarMarkers,
-} from './core/avatarMarkers';
+import { getAvatarMarkerKey, restoreAvatarMarkers } from './core/avatarMarkers';
 
 const MapPositionMarkers = ({
   positions,
@@ -26,20 +21,15 @@ const MapPositionMarkers = ({
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
 
   const mapReady = useMapReady();
-
   const mapCluster = useAttributePreference('mapCluster', true);
   const directionType = useAttributePreference('mapDirection', 'selected');
 
-  // Track avatars successfully registered with MapLibre.
-  const [registeredKeys, setRegisteredKeys] = useState(new Set());
+  const [registeredKeys, setRegisteredKeys] = useState(() => new Set());
 
   const onMapClickCallback = useCallback(
     (event) => {
       if (!event.defaultPrevented && onMapClick) {
-        const [longitude, latitude] = fromMapCoordinates(
-          event.lngLat.lng,
-          event.lngLat.lat,
-        );
+        const [longitude, latitude] = fromMapCoordinates(event.lngLat.lng, event.lngLat.lat);
         onMapClick(latitude, longitude);
       }
     },
@@ -51,7 +41,6 @@ const MapPositionMarkers = ({
     return () => map.off('click', onMapClickCallback);
   }, [onMapClickCallback]);
 
-  // Register avatars when devices or the map style changes.
   useEffect(() => {
     if (!mapReady) {
       setRegisteredKeys(new Set());
@@ -69,7 +58,6 @@ const MapPositionMarkers = ({
 
       Object.values(devices).forEach((device) => {
         const key = getAvatarMarkerKey(device);
-
         if (key && map.hasImage(key)) {
           keys.add(key);
         }
@@ -91,7 +79,6 @@ const MapPositionMarkers = ({
     const device = devices[position.deviceId];
 
     let showDirection;
-
     switch (directionType) {
       case 'none':
         showDirection = false;
@@ -100,9 +87,7 @@ const MapPositionMarkers = ({
         showDirection = position.course > 0;
         break;
       default:
-        showDirection =
-          selectedPosition?.id === position.id &&
-          position.course > 0;
+        showDirection = selectedPosition?.id === position.id && position.course > 0;
         break;
     }
 
@@ -115,16 +100,10 @@ const MapPositionMarkers = ({
       fixTime: formatTime(position.fixTime, 'seconds'),
     };
 
-    // Keep Traccar's original icon as the fallback.
     const defaultImage = `${mapIconKey(device.category)}-${color}`;
-
-    // Only Person devices with registered images use avatars.
     const avatarKey = getAvatarMarkerKey(device);
 
-    const image =
-      avatarKey && registeredKeys.has(avatarKey)
-        ? avatarKey
-        : defaultImage;
+    const image = avatarKey && registeredKeys.has(avatarKey) ? avatarKey : defaultImage;
 
     return {
       id: position.id,
@@ -139,37 +118,26 @@ const MapPositionMarkers = ({
   };
 
   const markers = positions
-    .filter((position) =>
-      Object.prototype.hasOwnProperty.call(
-        devices,
-        position.deviceId,
-      ),
-    )
+    .filter((position) => Object.prototype.hasOwnProperty.call(devices, position.deviceId))
     .map(buildMarker);
 
   const onClick = useCallback(
-    (properties) =>
-      onMarkerClick?.(properties.id, properties.deviceId),
+    (properties) => onMarkerClick?.(properties.id, properties.deviceId),
     [onMarkerClick],
   );
 
   return (
     <>
       <MapMarkers
-        markers={markers.filter(
-          (marker) => marker.deviceId !== selectedDeviceId,
-        )}
+        markers={markers.filter((marker) => marker.deviceId !== selectedDeviceId)}
         showTitles
         direction
         cluster={mapCluster}
         onClick={onClick}
         disabled={disabled}
       />
-
       <MapMarkers
-        markers={markers.filter(
-          (marker) => marker.deviceId === selectedDeviceId,
-        )}
+        markers={markers.filter((marker) => marker.deviceId === selectedDeviceId)}
         showTitles
         direction
         onClick={onClick}
