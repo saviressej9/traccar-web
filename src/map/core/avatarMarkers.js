@@ -1,4 +1,3 @@
-
 const avatarCache = new Map();
 const pendingAvatars = new Map();
 const registeredAvatars = new Map();
