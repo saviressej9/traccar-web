@@ -45,7 +45,8 @@ const FamilyInfoBubbles = ({ positions, onMarkerClick }) => {
     positions.forEach((position) => {
       const device = devices[position.deviceId];
 
-      if (device?.category !== 'person' || !device.attributes?.deviceImage) {
+      // Show a bubble for every person, even without a custom image.
+      if (device?.category !== 'person') {
         return;
       }
 
@@ -115,7 +116,13 @@ const FamilyInfoBubbles = ({ positions, onMarkerClick }) => {
         .setLngLat(toMapCoordinates(position.longitude, position.latitude))
         .addTo(map);
 
-      markers.push({ marker, bubble, handleClick, status, fixTime: position.fixTime });
+      markers.push({
+        marker,
+        bubble,
+        handleClick,
+        status,
+        fixTime: position.fixTime,
+      });
     });
 
     const refreshStatuses = () => {
