@@ -1,0 +1,28 @@
+# Dependencies and build output are produced inside the image.
+# Copying the host's node_modules would overwrite the container's Linux
+# binaries with macOS ones and break "npm run build".
+node_modules
+build
+
+# Version control and CI metadata are not needed to build the frontend.
+.git
+.gitignore
+.github
+
+# Editor and OS noise
+.vscode
+.idea
+.DS_Store
+
+# Local environment overrides. Note that plain .env is NOT ignored:
+# it is tracked and supplies VITE_APP_VERSION to the build.
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker's own files are read by the builder, not needed in the context.
+Dockerfile
+.dockerignore
