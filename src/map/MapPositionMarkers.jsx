@@ -8,6 +8,7 @@ import { mapIconKey } from './core/preloadImages';
 import { useAttributePreference } from '../common/util/preferences';
 import { fromMapCoordinates } from './core/mapUtil';
 import { getAvatarMarkerKey, restoreAvatarMarkers } from './core/avatarMarkers';
+import useAnimatedPositions from './core/useAnimatedPositions';
 
 const MapPositionMarkers = ({
   positions,
@@ -20,6 +21,10 @@ const MapPositionMarkers = ({
 }) => {
   const devices = useSelector((state) => state.devices.items);
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
+
+  // Markers and bubbles both render from the glided coordinates so they stay
+  // locked together; everything else still reads the raw fix.
+  const animatedPositions = useAnimatedPositions(positions);
 
   const mapReady = useMapReady();
   const mapCluster = useAttributePreference('mapCluster', true);
@@ -118,7 +123,7 @@ const MapPositionMarkers = ({
     };
   };
 
-  const markers = positions
+  const markers = animatedPositions
     .filter((position) => Object.prototype.hasOwnProperty.call(devices, position.deviceId))
     .map(buildMarker);
 
@@ -146,7 +151,7 @@ const MapPositionMarkers = ({
       />
       {mapReady && (
         <FamilyInfoBubbles
-          positions={positions}
+          positions={animatedPositions}
           onMarkerClick={disabled ? undefined : onMarkerClick}
         />
       )}
