@@ -34,7 +34,7 @@ const MainMap = ({ filteredPositions, selectedPosition, onEventsClick }) => {
 
   const onMarkerClick = useCallback(
     (_, deviceId) => {
-      dispatch(devicesActions.selectId(deviceId));
+      dispatch(devicesActions.selectIdWithCard(deviceId));
     },
     [dispatch],
   );

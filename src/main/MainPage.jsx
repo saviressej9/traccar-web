@@ -74,6 +74,7 @@ const MainPage = () => {
   const mapOnSelect = useAttributePreference('mapOnSelect', true);
 
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
+  const cardOpen = useSelector((state) => state.devices.cardOpen);
   const positions = useSelector((state) => state.session.positions);
   const [filteredPositions, setFilteredPositions] = useState([]);
   const selectedPosition = filteredPositions.find(
@@ -166,7 +167,7 @@ const MainPage = () => {
         )}
       </div>
       <EventsDrawer open={eventsOpen} onClose={() => setEventsOpen(false)} />
-      {selectedDeviceId && (
+      {selectedDeviceId && cardOpen && (
         <StatusCard
           deviceId={selectedDeviceId}
           position={selectedPosition}

@@ -9,6 +9,7 @@ import { toMapCoordinates } from '../core/mapUtil';
 const MapSelectedDevice = () => {
   const currentTime = useSelector((state) => state.devices.selectTime);
   const currentId = useSelector((state) => state.devices.selectedId);
+  const cardOpen = useSelector((state) => state.devices.cardOpen);
   const previousTime = usePrevious(currentTime);
   const previousId = usePrevious(currentId);
 
@@ -35,7 +36,8 @@ const MapSelectedDevice = () => {
       map.easeTo({
         center: toMapCoordinates(position.longitude, position.latitude),
         zoom: Math.max(map.getZoom(), selectZoom),
-        offset: [0, -dimensions.popupMapOffset / 2],
+        // Leave room for the status card only when it is actually open.
+        offset: cardOpen ? [0, -dimensions.popupMapOffset / 2] : [0, 0],
       });
     }
   }, [
@@ -43,6 +45,7 @@ const MapSelectedDevice = () => {
     previousId,
     currentTime,
     previousTime,
+    cardOpen,
     mapFollow,
     position,
     previousPosition,
