@@ -20,6 +20,10 @@ export default defineConfig(() => ({
     svgr(),
     react(),
     VitePWA({
+      // Phones were being left on an old build because the refresh prompt
+      // never appeared, and a stale index.html asks for chunks that no longer
+      // exist. Updating without asking avoids stranding them.
+      registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png'],
       workbox: {
         navigateFallbackDenylist: [/^\/api/],

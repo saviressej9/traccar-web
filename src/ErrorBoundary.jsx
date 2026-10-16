@@ -18,7 +18,9 @@ class ErrorBoundary extends React.Component {
     if (error) {
       return (
         <Alert severity="error">
-          <code style={{ whiteSpace: 'pre' }}>{error.stack}</code>
+          {/* Wrap rather than 'pre': on a phone an unwrapped stack runs off
+              the side of the screen and the alert looks empty. */}
+          <code style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{error.stack}</code>
         </Alert>
       );
     }
