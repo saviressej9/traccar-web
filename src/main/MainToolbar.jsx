@@ -55,6 +55,8 @@ const MainToolbar = ({
   setFilterSort,
   filterMap,
   setFilterMap,
+  hideOthers,
+  setHideOthers,
 }) => {
   const { classes } = useStyles();
   const theme = useTheme();
@@ -208,6 +210,12 @@ const MainToolbar = ({
                 <Checkbox checked={filterMap} onChange={(e) => setFilterMap(e.target.checked)} />
               }
               label={t('sharedFilterMap')}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox checked={hideOthers} onChange={(e) => setHideOthers(e.target.checked)} />
+              }
+              label="Hide others when focused"
             />
           </FormGroup>
         </div>

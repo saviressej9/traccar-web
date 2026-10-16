@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useCallback, useEffect } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { Paper } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { useTheme } from '@mui/material/styles';
@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import DeviceList from './DeviceList';
 import BottomMenu from '../common/components/BottomMenu';
 import StatusCard from '../common/components/StatusCard';
+import useHiddenDevices from '../common/util/useHiddenDevices';
 import { devicesActions } from '../store';
 import usePersistedState from '../common/util/usePersistedState';
 import EventsDrawer from './EventsDrawer';
@@ -91,6 +92,20 @@ const MainPage = () => {
   });
   const [filterSort, setFilterSort] = usePersistedState('filterSort', '');
   const [filterMap, setFilterMap] = usePersistedState('filterMap', false);
+  const [hideOthers, setHideOthers] = usePersistedState('hideOthersWhenFocused', true);
+
+  const { hiddenIds } = useHiddenDevices();
+
+  // A selected device always stays on the map, even when hidden, so tapping
+  // someone in the list never focuses the map on nothing.
+  const visiblePositions = useMemo(() => {
+    if (hideOthers && selectedDeviceId) {
+      return filteredPositions.filter((position) => position.deviceId === selectedDeviceId);
+    }
+    return filteredPositions.filter(
+      (position) => position.deviceId === selectedDeviceId || !hiddenIds.has(position.deviceId),
+    );
+  }, [filteredPositions, hiddenIds, hideOthers, selectedDeviceId]);
 
   const [devicesOpen, setDevicesOpen] = useState(desktop);
   const [eventsOpen, setEventsOpen] = useState(false);
@@ -118,7 +133,7 @@ const MainPage = () => {
       {desktop && (
         <Suspense fallback={null}>
           <MainMap
-            filteredPositions={filteredPositions}
+            filteredPositions={visiblePositions}
             selectedPosition={selectedPosition}
             onEventsClick={onEventsClick}
           />
@@ -138,6 +153,8 @@ const MainPage = () => {
             setFilterSort={setFilterSort}
             filterMap={filterMap}
             setFilterMap={setFilterMap}
+            hideOthers={hideOthers}
+            setHideOthers={setHideOthers}
           />
         </Paper>
         <div className={classes.middle}>
@@ -145,7 +162,7 @@ const MainPage = () => {
             <div className={classes.contentMap}>
               <Suspense fallback={null}>
                 <MainMap
-                  filteredPositions={filteredPositions}
+                  filteredPositions={visiblePositions}
                   selectedPosition={selectedPosition}
                   onEventsClick={onEventsClick}
                 />

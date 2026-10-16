@@ -16,6 +16,8 @@ import BatteryCharging60Icon from '@mui/icons-material/BatteryCharging60';
 import Battery20Icon from '@mui/icons-material/Battery20';
 import BatteryCharging20Icon from '@mui/icons-material/BatteryCharging20';
 import ErrorIcon from '@mui/icons-material/Error';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { devicesActions } from '../store';
@@ -28,6 +30,7 @@ import {
 } from '../common/util/formatter';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { mapIconKey, mapIcons } from '../map/core/preloadImages';
+import useHiddenDevices from '../common/util/useHiddenDevices';
 import { useAdministrator } from '../common/util/permissions';
 import EngineIcon from '../resources/images/data/engine.svg?react';
 import { useAttributePreference } from '../common/util/preferences';
@@ -60,6 +63,9 @@ const useStyles = makeStyles()((theme) => ({
   neutral: {
     color: theme.palette.neutral.main,
   },
+  hidden: {
+    opacity: 0.45,
+  },
   selected: {
     backgroundColor: theme.palette.action.selected,
   },
@@ -73,8 +79,12 @@ const DeviceRow = ({ devices, index, style }) => {
   const admin = useAdministrator();
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
 
+  const { hiddenIds, toggleHidden } = useHiddenDevices();
+
   const item = devices[index];
   const position = useSelector((state) => state.session.positions[item.id]);
+
+  const deviceHidden = hiddenIds.has(item.id);
 
   const devicePrimary = useAttributePreference('devicePrimary', 'name');
   const deviceSecondary = useAttributePreference('deviceSecondary', '');
@@ -121,17 +131,20 @@ const DeviceRow = ({ devices, index, style }) => {
     <div style={style}>
       <ListItemButton
         key={item.id}
-        onClick={() => dispatch(devicesActions.selectId(item.id))}
+        onClick={() =>
+          dispatch(devicesActions.selectId(selectedDeviceId === item.id ? null : item.id))
+        }
         disabled={!admin && item.disabled}
         selected={selectedDeviceId === item.id}
         className={selectedDeviceId === item.id ? classes.selected : null}
       >
-        <ListItemAvatar>
+        <ListItemAvatar className={deviceHidden ? classes.hidden : null}>
           <Avatar>
             <img className={classes.icon} src={mapIcons[mapIconKey(item.category)]} alt="" />
           </Avatar>
         </ListItemAvatar>
         <ListItemText
+          className={deviceHidden ? classes.hidden : null}
           primary={primaryValue}
           secondary={secondaryText()}
           slots={{
@@ -143,6 +156,22 @@ const DeviceRow = ({ devices, index, style }) => {
             secondary: { noWrap: true },
           }}
         />
+        <Tooltip title={deviceHidden ? 'Show on map' : 'Hide from map'}>
+          <IconButton
+            size="small"
+            onClick={(event) => {
+              // Without this the tap also selects the device and moves the map.
+              event.stopPropagation();
+              toggleHidden(item.id);
+            }}
+          >
+            {deviceHidden ? (
+              <VisibilityOffIcon fontSize="small" />
+            ) : (
+              <VisibilityIcon fontSize="small" />
+            )}
+          </IconButton>
+        </Tooltip>
         {position && (
           <>
             {position.attributes.hasOwnProperty('alarm') && (

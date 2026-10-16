@@ -39,6 +39,12 @@ const MainMap = ({ filteredPositions, selectedPosition, onEventsClick }) => {
     [dispatch],
   );
 
+  // Tapping empty map clears the selection, which is the way out of focus mode
+  // now that a list tap no longer opens the card with its close button.
+  const onMapClick = useCallback(() => {
+    dispatch(devicesActions.selectId(null));
+  }, [dispatch]);
+
   return (
     <>
       <MapView>
@@ -50,6 +56,7 @@ const MainMap = ({ filteredPositions, selectedPosition, onEventsClick }) => {
         <MapPositionMarkers
           positions={filteredPositions}
           onMarkerClick={onMarkerClick}
+          onMapClick={rulerActive ? undefined : onMapClick}
           selectedPosition={selectedPosition}
           showStatus
           disabled={rulerActive}
