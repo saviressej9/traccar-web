@@ -11,7 +11,9 @@ import NativeInterface from './common/components/NativeInterface';
 import ServerProvider from './ServerProvider';
 import ErrorBoundary from './ErrorBoundary';
 import AppThemeProvider from './AppThemeProvider';
+import recoverStaleBuild from './common/util/recoverStaleBuild';
 
+recoverStaleBuild();
 preloadImages();
 
 const root = createRoot(document.getElementById('root'));
